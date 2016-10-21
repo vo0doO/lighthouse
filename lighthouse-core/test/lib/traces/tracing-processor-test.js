@@ -22,6 +22,7 @@ const assert = require('assert');
 const pwaTrace = require('../../fixtures/traces/progressive-app.json');
 const defaultPercentiles = [0, 0.25, 0.5, 0.75, 0.9, 0.99, 1];
 
+
 /**
  * Create a riskPercentiles result object by matching the values in percentiles
  * and times.
@@ -207,6 +208,37 @@ describe('TracingProcessor lib', () => {
       assert.equal(getDurationFromIndex(durations.length - 3), 26.32);
       assert.equal(getDurationFromIndex(durations.length - 2), 37.61);
       assert.equal(getDurationFromIndex(durations.length - 1), 40.10);
+    });
+  });
+
+  describe('risk to responsiveness', () => {
+    let oldFn;
+    // monkeypatch _riskPercentiles to deal with gRtR solo
+    beforeEach(() => {
+      oldFn = TracingProcessor._riskPercentiles;
+      TracingProcessor._riskPercentiles = (durations, totalTime, percentiles, clippedLength) => {
+        return {
+          durations, totalTime, percentiles, clippedLength
+        };
+      };
+    });
+    afterEach(() => {
+      TracingProcessor._riskPercentiles = oldFn;
+    });
+
+    it('gets durations of top-level tasks', () => {
+      const tracingProcessor = new TracingProcessor();
+      const model = tracingProcessor.init(pwaTrace);
+      const ret = TracingProcessor.getRiskToResponsiveness(model, {traceEvents: pwaTrace});
+      const durations = ret.durations;
+
+      assert.equal(durations.filter(dur => isNaN(dur).length), 0);
+      assert.equal(durations.length, 309);
+      assert.equal(durations[50], 0.012);
+      assert.equal(durations[100], 0.053);
+      assert.equal(durations[200], 0.558);
+      assert.equal(durations[302], 14.815);
+      assert.equal(durations[durations.length - 1].toFixed(2), '40.10');
     });
   });
 });
