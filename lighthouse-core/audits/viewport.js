@@ -38,7 +38,7 @@ class Viewport extends Audit {
    */
   static audit(artifacts) {
     const hasMobileViewport = typeof artifacts.Viewport === 'string' &&
-        artifacts.Viewport.includes('width=');
+        (/width\s*=/.test(artifacts.Viewport) || /initial-scale\s*=/.test(artifacts.Viewport));
     return Viewport.generateAuditResult({
       rawValue: !!hasMobileViewport
     });
