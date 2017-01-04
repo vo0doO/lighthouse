@@ -17,6 +17,7 @@
 'use strict';
 
 const Audit = require('./audit');
+const Parser = require('metaviewport-parser');
 
 class Viewport extends Audit {
   /**
@@ -37,8 +38,15 @@ class Viewport extends Audit {
    * @return {!AuditResult}
    */
   static audit(artifacts) {
-    const hasMobileViewport = typeof artifacts.Viewport === 'string' &&
-        (/width\s*=/.test(artifacts.Viewport) || /initial-scale\s*=/.test(artifacts.Viewport));
+    if (typeof artifacts.Viewport !== 'string') {
+      return Viewport.generateAuditResult({
+        rawValue: false
+      });
+    }
+
+    const viewportProps = Parser.parseMetaViewPortContent(artifacts.Viewport).validProperties;
+    const hasMobileViewport = viewportProps['width'] || viewportProps['initial-scale'];
+
     return Viewport.generateAuditResult({
       rawValue: !!hasMobileViewport
     });
