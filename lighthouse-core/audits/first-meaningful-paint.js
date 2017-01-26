@@ -56,12 +56,12 @@ class FirstMeaningfulPaint extends Audit {
    * @return {!Promise<!AuditResult>} The score from the audit, ranging from 0-100.
    */
   static audit(artifacts) {
-    return new Promise((resolve, reject) => {
-      const traceContents = artifacts.traces[this.DEFAULT_PASS].traceEvents;
-      const evts = this.collectEvents(traceContents);
+    const trace = artifacts.traces[this.DEFAULT_PASS];
+    return artifacts.requestTabOfTrace(trace).then(tabTrace => {
+      const evts = this.collectEvents(tabTrace);
       const result = this.calculateScore(evts);
 
-      resolve(FirstMeaningfulPaint.generateAuditResult({
+      return FirstMeaningfulPaint.generateAuditResult({
         score: result.score,
         rawValue: parseFloat(result.duration),
         displayValue: `${result.duration}ms`,
@@ -71,7 +71,7 @@ class FirstMeaningfulPaint extends Audit {
           value: result.extendedInfo,
           formatter: Formatter.SUPPORTED_FORMATS.NULL
         }
-      }));
+      });
     }).catch(err => {
       // Recover from trace parsing failures.
       return FirstMeaningfulPaint.generateAuditResult({
@@ -120,27 +120,14 @@ class FirstMeaningfulPaint extends Audit {
   }
 
   /**
-   * @param {!Array<!Object>} traceData
+   * @param {!Object} tabTrace
    */
-  static collectEvents(traceData) {
-    // Parse the trace for our key events and sort them by timestamp.
-    const events = traceData.filter(e => {
-      return e.cat.includes('blink.user_timing') || e.name === 'TracingStartedInPage';
-    }).sort((event0, event1) => event0.ts - event1.ts);
+  static collectEvents(tabTrace) {
+    const navigationStart = tabTrace.navigationStartEvt;
+    const firstFCP = tabTrace.firstContentfulPaintEvt;
 
-    // The first TracingStartedInPage in the trace is definitely our renderer thread of interest
-    // Beware: the tracingStartedInPage event can appear slightly after a navigationStart
-    const startedInPageEvt = events.find(e => e.name === 'TracingStartedInPage');
-    // Filter to just events matching the frame ID for sanity
-    const frameEvents = events.filter(e => e.args.frame === startedInPageEvt.args.data.page);
-
-    // Find our first FCP
-    const firstFCP = frameEvents.find(e => e.name === 'firstContentfulPaint');
-    // Our navStart will be the latest one before fCP.
-    const navigationStart = frameEvents.filter(e =>
-        e.name === 'navigationStart' && e.ts < firstFCP.ts).pop();
     // fMP will follow at/after the FCP, though we allow some timestamp tolerance
-    const firstMeaningfulPaint = frameEvents.find(e =>
+    const firstMeaningfulPaint = tabTrace.traceEvents.find(e =>
         e.name === 'firstMeaningfulPaint' && e.ts >= (firstFCP.ts - FCPFMP_TOLERANCE));
 
     // Sometimes fMP is triggered before fCP
