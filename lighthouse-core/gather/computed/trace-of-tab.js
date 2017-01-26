@@ -19,7 +19,7 @@
 
 const ComputedArtifact = require('./computed-artifact');
 
-class ScreenshotFilmstrip extends ComputedArtifact {
+class TabOfTrace extends ComputedArtifact {
 
   get name() {
     return 'TabOfTrace';
@@ -61,4 +61,4 @@ class ScreenshotFilmstrip extends ComputedArtifact {
   }
 }
 
-module.exports = ScreenshotFilmstrip;
+module.exports = TabOfTrace;
