@@ -130,13 +130,12 @@ class TraceProcessor {
    * @return {!Array<{percentile: number, time: number}>}
    */
   static getRiskToResponsiveness(trace, startTime, endTime, percentiles) {
-    const events = trace.traceEvents.sort((a, b) => a.ts - b.ts).filter(e => e.ts !== 0);
-    const tsBase = events[0].ts;
+    const events = trace.traceEvents.filter(e => e.ts !== 0);
     const lastEvent = events[events.length - 1];
 
     // Range of responsiveness we care about. Default to bounds of model.
     startTime = startTime === undefined ? 0 : startTime;
-    endTime = endTime === undefined ? (lastEvent.ts - tsBase) / 1000 : endTime;
+    endTime = endTime === undefined ? lastEvent.ts : endTime;
     const totalTime = endTime - startTime;
     if (percentiles) {
       percentiles.sort((a, b) => a - b);
@@ -144,41 +143,39 @@ class TraceProcessor {
       percentiles = [0.5, 0.75, 0.9, 0.99, 1];
     }
 
-    const ret = TraceProcessor.getMainThreadTopLevelEventDurations(model, trace, startTime,
-        endTime);
+    const ret = TraceProcessor.getMainThreadTopLevelEventDurations(trace, startTime, endTime);
     return TraceProcessor._riskPercentiles(ret.durations, totalTime, percentiles,
         ret.clippedLength);
   }
 
   /**
    * Provides durations of all main thread top-level events
-   * @param {!traceviewer.Model} model
    * @param {{traceEvents: !Array<!Object>}} trace
    * @param {number} startTime Optional start time (in ms) of range of interest. Defaults to trace start.
    * @param {number} endTime Optional end time (in ms) of range of interest. Defaults to trace end.
    * @return {{durations: !Array<number>, clippedLength: number}}
    */
-  static getMainThreadTopLevelEventDurations(model, trace, startTime, endTime) {
+  static getMainThreadTopLevelEventDurations(trace, startTime, endTime) {
     // Find the main thread via the first TracingStartedInPage event in the trace
-    const startEvent = trace.traceEvents.find(event => {
-      return event.name === 'TracingStartedInPage';
-    });
+    const startEvent = trace.startedInPageEvt;
 
+    // TODO: change task of interest to "TaskQueueManager::ProcessTaskFromWorkQueue": see #489
     const topLevelTasks = trace.traceEvents.filter(evt => {
-      return evt.pid === startEvent.pid && evt.tid === startEvent.tid &&
-          evt.name === 'MessageLoop::RunTask';
+      return evt.tid === startEvent.tid && evt.dur && evt.name === 'MessageLoop::RunTask';
     });
 
     // Find durations of all slices in range of interest.
     const durations = [];
     let clippedLength = 0;
-    topLevelTasks.forEach(event => {
-      const eventStart = (event.ts - tsBase) / 1000;
-      const eventDuration = (event.dur || 0) / 1000;
-      const eventEnd = eventStart + eventDuration;
 
+    topLevelTasks.forEach(event => {
+      const eventStart = event.ts;
+      const eventDuration = event.dur;
+      const eventEnd = eventStart + eventDuration;
+      // console.log(eventStart, eventDuration, eventEnd)
       // Discard events outside range.
       if (eventEnd <= startTime || eventStart >= endTime) {
+        console.log(eventEnd , startTime , eventStart , endTime)
         return;
       }
 
@@ -195,7 +192,7 @@ class TraceProcessor {
         clippedLength = duration - (endTime - adjEventStart);
       }
 
-      durations.push(duration);
+      durations.push(duration / 1000);
     });
     durations.sort((a, b) => a - b);
 

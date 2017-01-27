@@ -64,28 +64,34 @@ class TTIMetric extends Audit {
   static audit(artifacts) {
     const trace = artifacts.traces[Audit.DEFAULT_PASS];
     const pendingSpeedline = artifacts.requestSpeedline(trace);
+    const pendingTabTrace = artifacts.requestTraceOfTab(trace);
     const pendingFMP = FMPMetric.audit(artifacts);
 
     // We start looking at Math.Max(FMPMetric, visProgress[0.85])
-    return Promise.all([pendingSpeedline, pendingFMP]).then(results => {
+    return Promise.all([pendingSpeedline, pendingTabTrace, pendingFMP]).then(results => {
       const speedline = results[0];
+      const tabTrace = results[0];
       const fmpResult = results[1];
       if (fmpResult.rawValue === -1) {
         return generateError(fmpResult.debugString);
       }
 
-      // Process the trace
-      const trace = artifacts.traces[Audit.DEFAULT_PASS];
-      const traceEvents = trace.traceEvents;
-      const endOfTraceTime = (traceEvents[traceEvents.length - 1].ts - traceEvents[0].ts) / 1000;
+      // TODO:
+      // change all the timings to be monotonic clock rather than 0 based
+      // this means adjusting speedline
+      // that might mean making speedline take an input navstart ts
+      // i only got 1/3 of the way throgh this file.
 
-      const fmpTiming = fmpResult.rawValue;
+      // Process the trace
+      const traceEvents = tabTrace.traceEvents;
+      const endOfTraceTs = traceEvents[traceEvents.length - 1].ts;
+
       const fmpResultExt = fmpResult.extendedInfo.value;
 
       // frame monotonic timestamps from speedline are in ms (ts / 1000), so we'll match
       //   https://github.com/pmdartus/speedline/blob/123f512632a/src/frame.js#L86
-      const fMPtsInMS = fmpResultExt.timestamps.fMP / 1000;
-      const navStartTsInMS = fmpResultExt.timestamps.navStart / 1000;
+      const fMPtsInMS = fmpResultExt.timestamps.fMP;
+      const navStartTsInMS = fmpResultExt.timestamps.navStart;
 
       // look at speedline results for 85% starting at FMP
       let visuallyReadyTiming = 0;
@@ -117,7 +123,7 @@ class TTIMetric extends Audit {
         }
         // Get our expected latency for the time window
         const latencies = TracingProcessor.getRiskToResponsiveness(
-          trace, startTime, endTime, percentiles);
+          tabTrace, startTime, endTime, percentiles);
         const estLatency = latencies[0].time.toFixed(2);
         foundLatencies.push({
           estLatency: estLatency,

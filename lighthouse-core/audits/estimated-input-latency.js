@@ -82,15 +82,19 @@ class EstimatedInputLatency extends Audit {
    */
   static audit(artifacts) {
     const trace = artifacts.traces[this.DEFAULT_PASS];
+    const pendingSpeedline = artifacts.requestSpeedline(trace);
+    const pendingTabTrace = artifacts.requestTraceOfTab(trace);
 
-    return artifacts.requestSpeedline(trace)
-      .then(speedline => EstimatedInputLatency.calculate(speedline, trace))
-      .catch(err => {
-        return EstimatedInputLatency.generateAuditResult({
-          rawValue: -1,
-          debugString: 'Speedline unable to parse trace contents: ' + err.message
-        });
+    return Promise.all([pendingSpeedline, pendingTabTrace]).then(results => {
+      const speedline = results[0];
+      const tabTrace = results[0];
+      return EstimatedInputLatency.calculate(speedline, tabTrace);
+    }).catch(err => {
+      return EstimatedInputLatency.generateAuditResult({
+        rawValue: -1,
+        debugString: 'Speedline unable to parse trace contents: ' + err.message
       });
+    });
   }
 }
 

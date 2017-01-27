@@ -22,6 +22,7 @@ const assert = require('assert');
 const pwaTrace = require('../../fixtures/traces/progressive-app.json');
 const defaultPercentiles = [0, 0.25, 0.5, 0.75, 0.9, 0.99, 1];
 
+const TraceOfTab = require('../../../gather/computed/trace-of-tab');
 
 /**
  * Create a riskPercentiles result object by matching the values in percentiles
@@ -189,10 +190,10 @@ describe('TracingProcessor lib', () => {
 
   describe('risk to responsiveness', () => {
     it('gets durations of top-level tasks', () => {
-      const tracingProcessor = new TracingProcessor();
-      const model = tracingProcessor.init(pwaTrace);
+      TracingProcessor = require('../../../lib/traces/tracing-processor');
       const trace = {traceEvents: pwaTrace};
-      const ret = TracingProcessor.getMainThreadTopLevelEventDurations(model, trace);
+      const tabTrace = new TraceOfTab().compute_(trace);
+      const ret = TracingProcessor.getMainThreadTopLevelEventDurations(tabTrace);
       const durations = ret.durations;
 
       function getDurationFromIndex(index) {
@@ -211,10 +212,11 @@ describe('TracingProcessor lib', () => {
     });
   });
 
-  describe('risk to responsiveness', () => {
+  describe.only('risk to responsiveness', () => {
     let oldFn;
     // monkeypatch _riskPercentiles to deal with gRtR solo
     beforeEach(() => {
+      TracingProcessor = require('../../../lib/traces/tracing-processor');
       oldFn = TracingProcessor._riskPercentiles;
       TracingProcessor._riskPercentiles = (durations, totalTime, percentiles, clippedLength) => {
         return {
@@ -224,12 +226,15 @@ describe('TracingProcessor lib', () => {
     });
 
     it('gets durations of top-level tasks', () => {
-      const ret = TracingProcessor.getRiskToResponsiveness({traceEvents: pwaTrace});
+      const trace = {traceEvents: pwaTrace};
+      const tabTrace = new TraceOfTab().compute_(trace);
+
+      const ret = TracingProcessor.getRiskToResponsiveness(tabTrace);
       const durations = ret.durations;
 
       assert.equal(durations.filter(dur => isNaN(dur)).length, 0, 'NaN found');
       assert.equal(durations.filter(dur => dur === Infinity).length, 0, 'Infinity found');
-      assert.equal(durations.length, 292, 'count of durations is unexpected');
+      assert.equal(durations.length, 291, 'count of durations is unexpected');
       assert.equal(durations[50], 0.019);
       assert.equal(durations[100], 0.072);
       assert.equal(durations[200], 0.768);
