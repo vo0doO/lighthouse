@@ -391,6 +391,11 @@ class Config {
     return this._artifacts;
   }
 
+  /** @param {Array<!Artifacts>} */
+  set artifacts(artifacts) {
+    this._artifacts = artifacts;
+  }
+
   /** @type {Array<!Aggregation>} */
   get aggregations() {
     return this._aggregations;
