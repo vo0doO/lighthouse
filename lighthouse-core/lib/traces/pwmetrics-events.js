@@ -19,7 +19,6 @@
 const log = require('../../../lighthouse-core/lib/log.js');
 
 class Metrics {
-
   constructor(traceEvents, auditResults) {
     this._traceEvents = traceEvents;
     this._auditResults = auditResults;
@@ -37,7 +36,7 @@ class Metrics {
         getTs: auditResults => {
           const fmpExt = auditResults['first-meaningful-paint'].extendedInfo;
           return fmpExt.value.timestamps.navStart;
-        }
+        },
       },
       {
         name: 'First Contentful Paint',
@@ -45,7 +44,7 @@ class Metrics {
         getTs: auditResults => {
           const fmpExt = auditResults['first-meaningful-paint'].extendedInfo;
           return fmpExt.value.timestamps.fCP;
-        }
+        },
       },
       {
         name: 'First Meaningful Paint',
@@ -53,7 +52,7 @@ class Metrics {
         getTs: auditResults => {
           const fmpExt = auditResults['first-meaningful-paint'].extendedInfo;
           return fmpExt.value.timestamps.fMP;
-        }
+        },
       },
       {
         name: 'Perceptual Speed Index',
@@ -61,7 +60,7 @@ class Metrics {
         getTs: auditResults => {
           const siExt = auditResults['speed-index-metric'].extendedInfo;
           return siExt.value.timestamps.perceptualSpeedIndex;
-        }
+        },
       },
       {
         name: 'First Visual Change',
@@ -69,7 +68,7 @@ class Metrics {
         getTs: auditResults => {
           const siExt = auditResults['speed-index-metric'].extendedInfo;
           return siExt.value.timestamps.firstVisualChange;
-        }
+        },
       },
       {
         name: 'Visually Complete 85%',
@@ -77,7 +76,7 @@ class Metrics {
         getTs: auditResults => {
           const siExt = auditResults['time-to-interactive'].extendedInfo;
           return siExt.value.timestamps.visuallyReady;
-        }
+        },
       },
       {
         name: 'Visually Complete 100%',
@@ -85,7 +84,7 @@ class Metrics {
         getTs: auditResults => {
           const siExt = auditResults['speed-index-metric'].extendedInfo;
           return siExt.value.timestamps.visuallyComplete;
-        }
+        },
       },
       {
         name: 'Time to Interactive',
@@ -93,8 +92,8 @@ class Metrics {
         getTs: auditResults => {
           const ttiExt = auditResults['time-to-interactive'].extendedInfo;
           return ttiExt.value.timestamps.timeToInteractive;
-        }
-      }
+        },
+      },
     ];
   }
 
@@ -111,7 +110,7 @@ class Metrics {
         resolvedMetrics.push({
           id: metric.id,
           name: metric.name,
-          ts: metric.getTs(this._auditResults)
+          ts: metric.getTs(this._auditResults),
         });
       } catch (e) {
         log.error('pwmetrics-events', `${metric.name} timestamp not found: ${e.message}`);
@@ -125,9 +124,11 @@ class Metrics {
    * @param {!Array<{ts: number, id: string, name: string}>} metrics
    */
   identifyNavigationStartEvt(metrics) {
-    const navStartTs = metrics.find(e => e.id === 'navstart').ts;
-    this._navigationStartEvt = this._traceEvents
-        .find(e => e.name === 'navigationStart' && e.ts === navStartTs);
+    const navStartMetric = metrics.find(e => e.id === 'navstart');
+    if (!navStartMetric) return;
+    this._navigationStartEvt = this._traceEvents.find(
+      e => e.name === 'navigationStart' && e.ts === navStartMetric.ts
+    );
   }
 
   /**
@@ -135,7 +136,6 @@ class Metrics {
    *     { "pid": 89922,"tid":1295,"ts":77176783452,"ph":"b","cat":"blink.user_timing","name":"innermeasure","args":{},"tts":1257886,"id":"0xe66c67"}
    *     { "pid": 89922,"tid":1295,"ts":77176882592,"ph":"e","cat":"blink.user_timing","name":"innermeasure","args":{},"tts":1257898,"id":"0xe66c67"}
    * @param {{ts: number, id: string, name: string}} metric
-   * @param {{ts: number, id: string, name: string}} navStart
    * @return {!Array} Pair of trace events (start/end)
    */
   synthesizeEventPair(metric) {
@@ -147,11 +147,11 @@ class Metrics {
       name: metric.name,
       args: {},
       // randomized id is same for the pair
-      id: `0x${((Math.random() * 1000000) | 0).toString(16)}`
+      id: `0x${((Math.random() * 1000000) | 0).toString(16)}`,
     };
     const fakeMeasureStartEvent = Object.assign({}, eventBase, {
       ts: this._navigationStartEvt.ts,
-      ph: 'b'
+      ph: 'b',
     });
     const fakeMeasureEndEvent = Object.assign({}, eventBase, {
       ts: metric.ts,

@@ -58,6 +58,7 @@ class TraceOfTab extends ComputedArtifact {
 
     // Our navStart will be the last frame navigation in the trace
     const navigationStart = frameEvents.filter(e => e.name === 'navigationStart').pop();
+    if (!navigationStart) throw new Error('navigationStart was not found in the trace');
 
     // Find our first paint of this frame
     const firstPaint = frameEvents.find(e => e.name === 'firstPaint' && e.ts > navigationStart.ts);
@@ -88,9 +89,7 @@ class TraceOfTab extends ComputedArtifact {
 
     // subset all trace events to just our tab's process (incl threads other than main)
     const processEvents = trace.traceEvents
-      .filter(e => {
-        return e.pid === startedInPageEvt.pid;
-      })
+      .filter(e => e.pid === startedInPageEvt.pid)
       .sort((event0, event1) => event0.ts - event1.ts);
 
     return {
