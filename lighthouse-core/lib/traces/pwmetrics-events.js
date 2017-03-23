@@ -121,24 +121,14 @@ class Metrics {
   }
 
   /**
-   * Getter for our navigationStart trace event
+   * Get the full trace event for our navigationStart
+   * @param {!Array<{ts: number, id: string, name: string}>} metrics
    */
-  getNavigationStartEvt() {
-    if (!this._navigationStartEvt) {
-      const filteredEvents = this._traceEvents.filter(e => {
-        return e.name === 'TracingStartedInPage' || e.cat === 'blink.user_timing';
-      });
-
-      const tracingStartedEvt = filteredEvents.filter(e => e.name === 'TracingStartedInPage')[0];
-      const navigationStartEvt = filteredEvents.filter(e => {
-        return e.name === 'navigationStart' &&
-            e.pid === tracingStartedEvt.pid && e.tid === tracingStartedEvt.tid;
-      })[0];
-      this._navigationStartEvt = navigationStartEvt;
-    }
-    return this._navigationStartEvt;
+  identifyNavigationStartEvt(metrics) {
+    const navStartTs = metrics.find(e => e.id === 'navstart').ts;
+    this._navigationStartEvt = this._traceEvents
+        .find(e => e.name === 'navigationStart' && e.ts === navStartTs);
   }
-
 
   /**
    * Constructs performance.measure trace events, which have start/end events as follows:
@@ -148,11 +138,11 @@ class Metrics {
    * @param {{ts: number, id: string, name: string}} navStart
    * @return {!Array} Pair of trace events (start/end)
    */
-  synthesizeEventPair(metric, navStart) {
+  synthesizeEventPair(metric) {
     // We'll masquerade our fake events to look mostly like navigationStart
     const eventBase = {
-      pid: this.getNavigationStartEvt().pid,
-      tid: this.getNavigationStartEvt().tid,
+      pid: this._navigationStartEvt.pid,
+      tid: this._navigationStartEvt.tid,
       cat: 'blink.user_timing',
       name: metric.name,
       args: {},
@@ -160,7 +150,7 @@ class Metrics {
       id: `0x${((Math.random() * 1000000) | 0).toString(16)}`
     };
     const fakeMeasureStartEvent = Object.assign({}, eventBase, {
-      ts: navStart.ts,
+      ts: this._navigationStartEvt.ts,
       ph: 'b'
     });
     const fakeMeasureEndEvent = Object.assign({}, eventBase, {
@@ -181,10 +171,9 @@ class Metrics {
       return [];
     }
 
-    // confirm our navStart's correctly match
-    const navStartEvt = metrics.find(e => e.id === 'navstart');
-    if (!navStartEvt || this.getNavigationStartEvt().ts !== navStartEvt.ts) {
-      log.error('pwmetrics-events', 'Reference navigationStart doesn\'t match fMP\'s navStart');
+    this.identifyNavigationStartEvt(metrics);
+    if (!this._navigationStartEvt) {
+      log.error('pwmetrics-events', 'Reference navigationStart not found');
       return [];
     }
 
@@ -197,7 +186,7 @@ class Metrics {
         return;
       }
       log.verbose('pwmetrics-events', `Sythesizing trace events for ${metric.name}`);
-      fakeEvents.push(...this.synthesizeEventPair(metric, navStartEvt));
+      fakeEvents.push(...this.synthesizeEventPair(metric));
     });
     return fakeEvents;
   }
