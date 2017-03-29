@@ -43,6 +43,30 @@ class ReportGeneratorV2 {
   }
 
   /**
+   * Convert categories into old-school aggregations for old HTML report compat.
+   * @param {!Array<!Object>} categories
+   * @return {!Array<!Aggregation>}
+   */
+  static _getAggregations(reportCategories) {
+    return reportCategories.map(category => {
+      const name = category.name;
+      const description = category.description;
+
+      return {
+        name, description,
+        categorizable: false,
+        scored: category.id === 'pwa',
+        total: category.score / 100,
+        score: [{
+          name, description,
+          overall: category.score / 100,
+          subItems: category.audits.map(audit => audit.result),
+        }],
+      };
+    });
+  }
+
+  /**
    * Returns the report JSON object with computed scores.
    * @param {{categories: !Object<{audits: !Array}>}} config
    * @param {!Object<{score: ?number|boolean|undefined}>} resultsByAuditId
@@ -51,6 +75,7 @@ class ReportGeneratorV2 {
   generateReportJson(config, resultsByAuditId) {
     const categories = Object.keys(config.categories).map(categoryId => {
       const category = config.categories[categoryId];
+      category.id = categoryId;
 
       const audits = category.audits.map(audit => {
         const result = resultsByAuditId[audit.id];
@@ -68,7 +93,8 @@ class ReportGeneratorV2 {
     });
 
     const score = ReportGeneratorV2.arithmeticMean(categories);
-    return {score, categories};
+    const aggregations = ReportGeneratorV2._getAggregations(categories);
+    return {score, categories, aggregations};
   }
 
   /**
