@@ -93,6 +93,7 @@ class ReportGeneratorV2 {
     });
 
     const score = ReportGeneratorV2.arithmeticMean(categories);
+    // TODO: remove aggregations when old report is fully replaced
     const aggregations = ReportGeneratorV2._getAggregations(categories);
     return {score, categories, aggregations};
   }
