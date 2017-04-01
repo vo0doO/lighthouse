@@ -42,7 +42,7 @@ class ReportGeneratorV2 {
     return (results.sum / results.weight) || 0;
   }
 
-  /**  
+  /**
    * Replaces all the specified strings in source without serial replacements.
    * @param {string} source
    * @param {!Array<{search: string, replacement: string}>} replacements
@@ -59,7 +59,7 @@ class ReportGeneratorV2 {
         .map(part => ReportGeneratorV2.replaceStrings(part, nextReplacements))
         .join(firstReplacement.replacement);
   }
-  
+
   /**
    * Convert categories into old-school aggregations for old HTML report compat.
    * @param {!Array<!Object>} categories
