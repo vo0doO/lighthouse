@@ -98,12 +98,11 @@ class ReportGeneratorV2 {
   generateReportHtml(reportAsJson) {
     const sanitizedJson = JSON.stringify(reportAsJson).replace(/</g, '\\u003c');
     const sanitizedJavascript = REPORT_JAVASCRIPT.replace(/<\//g, '\\u003c/');
-
-    const sanitizedCss = REPORT_CSS.replace(/<\//g, '\\u003c/');
-    return REPORT_TEMPLATE
-      .replace(/%%LIGHTHOUSE_JSON%%/, sanitizedJson)
-      .replace(/%%LIGHTHOUSE_JAVASCRIPT%%/, sanitizedJavascript)
-      .replace(/%%LIGHTHOUSE_CSS%%/, sanitizedCss);
+    return ReportGeneratorV2.replaceStrings(REPORT_TEMPLATE, [
+      {search: '%%LIGHTHOUSE_JSON%%', replacement: sanitizedJson},
+      {search: '%%LIGHTHOUSE_JAVASCRIPT%%', replacement: sanitizedJavascript},
+      {search: '/*%%LIGHTHOUSE_CSS%%*/', replacement: REPORT_CSS},
+    ]);
   }
 }
 
