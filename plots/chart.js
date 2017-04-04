@@ -45,12 +45,7 @@ function generateBoxPlotChartPerMetric() {
     data = data
       .map(siteResult => {
         return {
-          x: siteResult.metrics.map(m => {
-            if (!m) {
-              return;
-            }
-            return m[type];
-          }),
+          x: siteResult.metrics.map(m => m ? m[type] : null),
           type: 'box',
           name: siteResult.site,
           boxpoints: 'all',
@@ -58,8 +53,7 @@ function generateBoxPlotChartPerMetric() {
           pointpos: -2,
           hoverinfo: 'x+name'
         };
-      })
-      .reverse();
+      });
 
     const layout = {title: title + ' ' + type};
     Plotly.newPlot(createChartElement(1000), data, layout);
@@ -75,7 +69,7 @@ function generateLinePlotChartPerMetric() {
   }
 
   function generateLinePlotByBatch({metric, type}) {
-    const width = 30;
+    const width = 20;
     for (let i = 0; i < generatedResults[metric].length; i += width) {
       generateLinePlot({
         title: metric,
@@ -88,12 +82,7 @@ function generateLinePlotChartPerMetric() {
   function generateLinePlot({title, data, type}) {
     data = data.map(siteResult => ({
       name: siteResult.site,
-      y: siteResult.metrics.map(m => {
-        if (!m) {
-          return;
-        }
-        return m[type];
-      }),
+      y: siteResult.metrics.map(m => m ? m[type] : null),
       type: 'scatter'
     }));
 

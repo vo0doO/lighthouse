@@ -29,7 +29,6 @@ const ChromeLauncher = require('../lighthouse-cli/chrome-launcher.js').ChromeLau
 const Printer = require('../lighthouse-cli/printer');
 const assetSaver = require('../lighthouse-core/lib/asset-saver.js');
 
-// TODO(chenwilliam): make this a flag (e.g. -n 10)
 const NUMBER_OF_RUNS = 20;
 
 const URLS = [
@@ -37,7 +36,7 @@ const URLS = [
   'https://nytimes.com',
   'https://flipkart.com',
   'http://www.espn.com/',
-  'https://www.washingtonpost.com/pwa/'
+  'https://www.washingtonpost.com/pwa/',
 
   // Sourced from: https://en.wikipedia.org/wiki/List_of_most_popular_websites
   // (http://www.alexa.com/topsites)
@@ -45,63 +44,63 @@ const URLS = [
   // Also removed sites that don't have significant index pages:
   // "t.co", "popads.net", "onclickads.net", "microsoftonline.com", "onclckds.com", "cnzz.com",
   // "live.com", "adf.ly", "googleusercontent.com",
-  // 'https://google.com',
-  // 'https://youtube.com',
-  // 'https://facebook.com',
-  // 'https://baidu.com',
-  // 'https://wikipedia.org',
-  // 'https://yahoo.com',
-  // 'https://amazon.com',
-  // 'http://www.qq.com/',
-  // 'https://taobao.com',
-  // 'https://vk.com',
-  // 'https://twitter.com',
-  // 'https://instagram.com',
-  // 'http://www.hao123.cn/',
-  // 'http://www.sohu.com/',
-  // 'https://sina.com.cn',
-  // 'https://reddit.com',
-  // 'https://linkedin.com',
-  // 'https://tmall.com',
-  // 'https://weibo.com',
-  // 'https://360.cn',
-  // 'https://yandex.ru',
-  // 'https://ebay.com',
-  // 'https://bing.com',
-  // 'https://msn.com',
-  // 'https://www.sogou.com/',
-  // 'https://wordpress.com',
-  // 'https://microsoft.com',
-  // 'https://tumblr.com',
-  // 'https://aliexpress.com',
-  // 'https://blogspot.com',
-  // 'https://netflix.com',
-  // 'https://ok.ru',
-  // 'https://stackoverflow.com',
-  // 'https://imgur.com',
-  // 'https://apple.com',
-  // 'http://www.naver.com/',
-  // 'https://mail.ru',
-  // 'http://www.imdb.com/',
-  // 'https://office.com',
-  // 'https://github.com',
-  // 'https://pinterest.com',
-  // 'https://paypal.com',
-  // 'http://www.tianya.cn/',
-  // 'https://diply.com',
-  // 'https://twitch.tv',
-  // 'https://adobe.com',
-  // 'https://wikia.com',
-  // 'https://coccoc.com',
-  // 'https://so.com',
-  // 'https://fc2.com',
-  // 'https://www.pixnet.net/',
-  // 'https://dropbox.com',
-  // 'https://zhihu.com',
-  // 'https://whatsapp.com',
-  // 'https://alibaba.com',
-  // 'https://ask.com',
-  // 'https://bbc.com'
+  'https://google.com',
+  'https://youtube.com',
+  'https://facebook.com',
+  'https://baidu.com',
+  'https://wikipedia.org',
+  'https://yahoo.com',
+  'https://amazon.com',
+  'http://www.qq.com/',
+  'https://taobao.com',
+  'https://vk.com',
+  'https://twitter.com',
+  'https://instagram.com',
+  'http://www.hao123.cn/',
+  'http://www.sohu.com/',
+  'https://sina.com.cn',
+  'https://reddit.com',
+  'https://linkedin.com',
+  'https://tmall.com',
+  'https://weibo.com',
+  'https://360.cn',
+  'https://yandex.ru',
+  'https://ebay.com',
+  'https://bing.com',
+  'https://msn.com',
+  'https://www.sogou.com/',
+  'https://wordpress.com',
+  'https://microsoft.com',
+  'https://tumblr.com',
+  'https://aliexpress.com',
+  'https://blogspot.com',
+  'https://netflix.com',
+  'https://ok.ru',
+  'https://stackoverflow.com',
+  'https://imgur.com',
+  'https://apple.com',
+  'http://www.naver.com/',
+  'https://mail.ru',
+  'http://www.imdb.com/',
+  'https://office.com',
+  'https://github.com',
+  'https://pinterest.com',
+  'https://paypal.com',
+  'http://www.tianya.cn/',
+  'https://diply.com',
+  'https://twitch.tv',
+  'https://adobe.com',
+  'https://wikia.com',
+  'https://coccoc.com',
+  'https://so.com',
+  'https://fc2.com',
+  'https://www.pixnet.net/',
+  'https://dropbox.com',
+  'https://zhihu.com',
+  'https://whatsapp.com',
+  'https://alibaba.com',
+  'https://ask.com',
+  'https://bbc.com'
 ];
 
 function main() {
@@ -118,11 +117,11 @@ function main() {
     .then(() => runAnalysis())
     .then(() => launcher.kill())
     .catch(err => launcher.kill().then(
-        () => {
-          throw err;
-        },
-        console.error // eslint-disable-line no-console
-      ));
+      () => {
+        throw err;
+      },
+      console.error // eslint-disable-line no-console
+    ));
 }
 
 main();

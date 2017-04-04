@@ -135,7 +135,7 @@ class Metrics {
         },
         getTiming: auditResults => {
           const ttiExt = auditResults['time-to-interactive'].extendedInfo;
-          return safeGet(ttiExt, 'value.timestamps.timeToInteractiveB');
+          return safeGet(ttiExt, 'value.timings.timeToInteractiveB');
         }
       },
       {
@@ -147,7 +147,7 @@ class Metrics {
         },
         getTiming: auditResults => {
           const ttiExt = auditResults['time-to-interactive'].extendedInfo;
-          return safeGet(ttiExt, 'value.timestamps.timeToInteractiveC');
+          return safeGet(ttiExt, 'value.timings.timeToInteractiveC');
         }
       },
       {
