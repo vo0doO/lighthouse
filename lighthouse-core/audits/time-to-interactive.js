@@ -29,8 +29,8 @@ class TTIMetric extends Audit {
       name: 'time-to-interactive',
       description: 'Time To Interactive (alpha)',
       helpText: 'Time to Interactive identifies the time at which your app appears to be ready ' +
-      'enough to interact with. ' +
-      '[Learn more](https://developers.google.com/web/tools/lighthouse/audits/time-to-interactive).',
+          'enough to interact with. ' +
+          '[Learn more](https://developers.google.com/web/tools/lighthouse/audits/time-to-interactive).',
       optimalValue: SCORING_TARGET.toLocaleString() + 'ms',
       requiredArtifacts: ['traces']
     };
@@ -60,7 +60,7 @@ class TTIMetric extends Audit {
       endTime = startTime + windowSize;
       // If there's no more room in the trace to look, we're done.
       if (endTime > maxTime) {
-        return { currentLatency, foundLatencies };
+        return {currentLatency, foundLatencies};
       }
 
       // Get our expected latency for the time window
@@ -188,8 +188,8 @@ class TTIMetric extends Audit {
         }
       }
 
-      const times = { fmpTiming, visuallyReadyTiming, traceEndTiming };
-      const data = { tabTrace, model, trace };
+      const times = {fmpTiming, visuallyReadyTiming, traceEndTiming};
+      const data = {tabTrace, model, trace};
       const timeToInteractive = TTIMetric.findTTIAlpha(times, data);
       const timeToInteractiveB = TTIMetric.findTTIAlphaFMPOnly(times, data);
       const timeToInteractiveC = TTIMetric.findTTIAlphaFMPOnly5s(times, data);
@@ -203,7 +203,7 @@ class TTIMetric extends Audit {
       //   5000ms: score=50
       //   >= 15000ms: score≈0
       const distribution = TracingProcessor.getLogNormalDistribution(SCORING_MEDIAN,
-        SCORING_POINT_OF_DIMINISHING_RETURNS);
+          SCORING_POINT_OF_DIMINISHING_RETURNS);
       let score = 100 * distribution.computeComplementaryPercentile(timeToInteractive.timeInMs);
 
       // Clamp the score to 0 <= x <= 100.
