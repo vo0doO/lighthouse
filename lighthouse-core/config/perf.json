@@ -26,7 +26,6 @@
     "byte-efficiency/uses-request-compression",
     "byte-efficiency/uses-responsive-images",
     "dobetterweb/dom-size",
-    "byte-efficiency/uses-request-compression",
     "dobetterweb/link-blocking-first-paint",
     "dobetterweb/script-blocking-first-paint"
   ],

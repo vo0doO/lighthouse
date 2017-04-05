@@ -50,6 +50,7 @@ module.exports = {
       "dobetterweb/notification-on-start",
       "dobetterweb/domstats",
       "dobetterweb/optimized-images",
+      "dobetterweb/response-compression",
       "dobetterweb/tags-blocking-first-paint",
       "dobetterweb/websql"
     ]
@@ -114,6 +115,7 @@ module.exports = {
     // "byte-efficiency/unused-css-rules",
     "byte-efficiency/offscreen-images",
     "byte-efficiency/uses-optimized-images",
+    "byte-efficiency/uses-request-compression",
     "byte-efficiency/uses-responsive-images",
     "dobetterweb/appcache-manifest",
     "dobetterweb/dom-size",
@@ -531,6 +533,10 @@ module.exports = {
           "expectedValue": true,
           "weight": 1
         },
+        "uses-request-compression": {
+          "expectedValue": true,
+          "weight": 1
+        },
         "uses-responsive-images": {
           "expectedValue": true,
           "weight": 1
@@ -613,6 +619,7 @@ module.exports = {
         {"id": "script-blocking-first-paint", "weight": 0},
         // {"id": "unused-css-rules", "weight": 0},
         {"id": "uses-optimized-images", "weight": 0},
+        {"id": "uses-request-compression", "weight": 0},
         {"id": "uses-responsive-images", "weight": 0},
         {"id": "total-byte-weight", "weight": 0},
         {"id": "dom-size", "weight": 0},
