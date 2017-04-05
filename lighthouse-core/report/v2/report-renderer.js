@@ -35,11 +35,11 @@ const RATINGS = {
 /**
  * Convert a score to a rating label.
  * @param {!number} score
- * @param {!string} precision One of 'binary', 'numeric', 'grade'.
+ * @param {!string} scoringMode One of Audit.SCORING_MODES.
  * @return {!string}
  */
-function calculateRating(score, precision) {
-  if (precision === 'numeric') {
+function calculateRating(score, scoringMode) {
+  if (scoringMode === 'numeric') {
     let rating = RATINGS.FAIL.label;
     if (score >= RATINGS.PASS.minScore) {
       rating = RATINGS.PASS.label;
@@ -47,8 +47,6 @@ function calculateRating(score, precision) {
       rating = RATINGS.AVERAGE.label;
     }
     return rating;
-  } else if (precision === 'grade') {
-    // Not implemented yet.
   }
 
   // Treat as binary by default.
@@ -153,19 +151,19 @@ class ReportRenderer {
 
   /**
    * @param {!Element} tmpl Parent node to populate with values.
-   * @param {!{value: string, precision: string}} score
+   * @param {!{value: string, scoringMode: string}} score
    * @param {!string} title
    * @param {!string} description
    * @return {!Element}
    */
   _populateScore(tmpl, score, title, description) {
-    const rating = calculateRating(score.value, score.precision);
+    const rating = calculateRating(score.value, score.scoringMode);
 
     // Fill in the blanks.
     const value = tmpl.querySelector('.lighthouse-score__value');
     DOM.setText(value, formatNumber(score.value));
     DOM.addClass(value, `lighthouse-score__value--${rating}`,
-                        `lighthouse-score__value--${score.precision}`);
+                        `lighthouse-score__value--${score.scoringMode}`);
 
     DOM.setText(tmpl.querySelector('.lighthouse-score__title'), title);
     DOM.setText(tmpl.querySelector('.lighthouse-score__description'), description);
@@ -174,7 +172,7 @@ class ReportRenderer {
   }
 
   /**
-   * @param {!{value: string, precision: string}} score
+   * @param {!{value: string, scoringMode: string}} score
    * @param {!string} title
    * @param {!string} description
    * @return {!Element}
@@ -185,7 +183,7 @@ class ReportRenderer {
   }
 
   /**
-   * @param {!{value: string, precision: string}} score
+   * @param {!{value: string, scoringMode: string}} score
    * @param {!string} title
    * @param {!string} description
    * @return {!Element}
@@ -282,8 +280,7 @@ class ReportRenderer {
    */
   _renderCategory(category) {
     const element = this._dom.createElement('div', 'lighthouse-category');
-    // TODO: use precision when it's on category.score.
-    const score = {value: Math.round(category.score), precision: 'numeric'};
+    const score = {value: Math.round(category.score), scoringMode: 'numeric'};
     element.appendChild(
         this._renderAuditScore(score, category.name, category.description, category));
     for (const audit of category.audits) {
@@ -306,9 +303,7 @@ class ReportRenderer {
       title += ` (target: ${audit.result.optimalValue})`;
     }
 
-    // TODO: use precision when it's on audit.score.
-    const score = {value: audit.score, precision: 'numeric'};
-
+    const score = {value: audit.score, scoringMode: audit.result.scoringMode};
     element.appendChild(this._renderAuditScore(score, title, audit.result.helpText, audit));
 
     // Append audit details to to header section so the entire audit is within one <details>.
@@ -326,6 +321,7 @@ class ReportRenderer {
 
 // Exports
 self.ReportRenderer = ReportRenderer;
+self.DOM = DOM;
 })(self);
 
 /** @typedef {{type: string, text: string|undefined, header: DetailsJSON|undefined, items: Array<DetailsJSON>|undefined}} */
