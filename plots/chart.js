@@ -16,11 +16,28 @@
  */
 'use strict';
 
-/* global Plotly, document, generatedResults */
+/* global Plotly, generatedResults */
+/* eslint-env browser */
 
 const IGNORED_METRICS = ['Navigation Start'];
 
 let elementId = 1;
+
+const queuedPlots = [];
+function enqueuePlot(fn) {
+  const isFirst = queuedPlots.length == 0;
+  queuedPlots.push(fn);
+  if (isFirst) renderPlots();
+}
+function renderPlots() {
+  window.requestAnimationFrame(_ => {
+    const plotFn = queuedPlots.shift();
+    if (plotFn) {
+      plotFn();
+      renderPlots();
+    }
+  });
+}
 
 function generateBoxPlotChartPerMetric() {
   for (const metric in generatedResults) {
@@ -56,7 +73,9 @@ function generateBoxPlotChartPerMetric() {
       });
 
     const layout = {title: title + ' ' + type};
-    Plotly.newPlot(createChartElement(1000), data, layout);
+    enqueuePlot(_ => {
+      Plotly.newPlot(createChartElement(1000), data, layout);
+    });
   }
 }
 
@@ -87,8 +106,9 @@ function generateLinePlotChartPerMetric() {
     }));
 
     const layout = {title: title + ' ' + type};
-
-    Plotly.newPlot(createChartElement(), data, layout);
+    enqueuePlot(_ => {
+      Plotly.newPlot(createChartElement(), data, layout);
+    });
   }
 }
 
