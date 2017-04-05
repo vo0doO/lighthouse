@@ -155,7 +155,7 @@ function onGenerateReportButtonClick(background, selectedCategories) {
 
 /**
  * Generates a document fragment containing a list of checkboxes and labels
- * for the category categories.
+ * for the categories.
  * @param {!Window} background Reference to the extension's background page.
  * @param {!Object<boolean>} selectedCategories
  */

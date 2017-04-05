@@ -26,6 +26,11 @@ const Audit = require('../../audits/audit');
 /* eslint-env mocha */
 
 describe('Config', () => {
+  let origConfig;
+  beforeEach(() => {
+    origConfig = JSON.parse(JSON.stringify(defaultConfig));
+  });
+
   it('returns new object', () => {
     const config = {
       audits: ['is-on-https']
@@ -60,8 +65,8 @@ describe('Config', () => {
 
   it('uses the default config when no config is provided', () => {
     const config = new Config();
-    assert.deepStrictEqual(defaultConfig.aggregations, config.aggregations);
-    assert.equal(defaultConfig.audits.length, config.audits.length);
+    assert.deepStrictEqual(origConfig.aggregations, config.aggregations);
+    assert.equal(origConfig.audits.length, config.audits.length);
   });
 
   it('warns when a passName is used twice', () => {
@@ -149,7 +154,7 @@ describe('Config', () => {
   });
 
   it('contains new copies of auditResults and aggregations', () => {
-    const configJSON = defaultConfig;
+    const configJSON = origConfig;
     configJSON.auditResults = [{
       value: 1,
       rawValue: 1.0,
@@ -367,7 +372,7 @@ describe('Config', () => {
 
   describe('getCategories', () => {
     it('returns the IDs & names of the aggregations', () => {
-      const categories = Config.getCategories(defaultConfig);
+      const categories = Config.getCategories(origConfig);
       assert.equal(Array.isArray(categories), true);
       assert.equal(categories.length, 4, 'Found the correct number of categories');
       const haveName = categories.every(agg => agg.name.length);
@@ -377,37 +382,38 @@ describe('Config', () => {
   });
 
   describe('generateConfigOfCategories', () => {
-    const categoryIds = ['performance'];
-    const totalAuditCount = defaultConfig.audits.length;
-
     it('should not mutate the original config', () => {
-      const origConfig = Object.freeze(JSON.parse(JSON.stringify(defaultConfig)));
-      Config.generateNewConfigOfCategories(origConfig, categoryIds);
+      const configCopy = JSON.parse(JSON.stringify(origConfig));
+      Config.generateNewConfigOfCategories(configCopy, ['performance']);
+      assert.deepStrictEqual(configCopy, origConfig, 'no mutations');
     });
 
     it('should filter out other passes if passed Performance', () => {
-      const config = Config.generateNewConfigOfCategories(defaultConfig, categoryIds);
+      const totalAuditCount = origConfig.audits.length;
+      const config = Config.generateNewConfigOfCategories(origConfig, ['performance']);
       assert.equal(Object.keys(config.categories).length, 1, 'other categories are present');
       assert.equal(config.passes.length, 2, 'incorrect # of passes');
       assert.ok(config.audits.length < totalAuditCount, 'audit filtering probably failed');
     });
 
     it('should filter out other passes if passed PWA', () => {
-      const config = Config.generateNewConfigOfCategories(defaultConfig, ['pwa']);
+      const totalAuditCount = origConfig.audits.length;
+      const config = Config.generateNewConfigOfCategories(origConfig, ['pwa']);
       assert.equal(Object.keys(config.categories).length, 1, 'other categories are present');
       assert.ok(config.audits.length < totalAuditCount, 'audit filtering probably failed');
     });
 
     it('should filter out other passes if passed Best Practices', () => {
-      const config = Config.generateNewConfigOfCategories(defaultConfig, ['best-practices']);
+      const totalAuditCount = origConfig.audits.length;
+      const config = Config.generateNewConfigOfCategories(origConfig, ['best-practices']);
       assert.equal(Object.keys(config.categories).length, 1, 'other categories are present');
       assert.equal(config.passes.length, 2, 'incorrect # of passes');
       assert.ok(config.audits.length < totalAuditCount, 'audit filtering probably failed');
     });
 
     it('should only run audits for ones named by the category', () => {
-      const config = Config.generateNewConfigOfCategories(defaultConfig, categoryIds);
-      const selectedCategory = defaultConfig.categories[categoryIds[0]];
+      const config = Config.generateNewConfigOfCategories(origConfig, ['performance']);
+      const selectedCategory = origConfig.categories.performance;
       const auditCount = Object.keys(selectedCategory.audits).length;
 
       assert.equal(config.audits.length, auditCount, '# of audits match aggregation list');

@@ -62,7 +62,8 @@ class ReportGeneratorV2 {
 
   /**
    * Convert categories into old-school aggregations for old HTML report compat.
-   * @param {!Array<!Object>} categories
+   * @param {!Array<{name: string, description: string, id: string, score: number,
+   *    audits: !Array<{result: Object}>}>} categories
    * @return {!Array<!Aggregation>}
    */
   static _getAggregations(reportCategories) {

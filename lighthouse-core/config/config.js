@@ -313,16 +313,17 @@ class Config {
     return merge(baseJSON, extendJSON);
   }
 
- /**
-   * @param {!Object} config
-   * @param {!Array<string>} categoryIds
-   * @return {!Object}
+  /**
+   * Filter out any unrequested items from the config, based on requested top-level categories.
+   * @param {!Object} oldConfig Lighthouse config object
+   * @param {!Array<string>} categoryIds ID values of categories to include
+   * @return {!Object} A new config
    */
-  static generateNewConfigOfCategories(config, categoryIds) {
+  static generateNewConfigOfCategories(oldConfig, categoryIds) {
     // 0. Clone config to avoid mutating it
-    config = Object.assign({}, config);
+    const config = JSON.parse(JSON.stringify(oldConfig));
     // 1. Filter to just the chosen categories
-    config.categories = Config.filterCategoriesAndAudits(config.categories, categoryIds);
+    config.categories = Config.filterCategories(config.categories, categoryIds);
 
     // 2. Resolve which audits will need to run
     const requestedAuditNames = Config.getAuditIdsInCategories(config.categories);
@@ -340,25 +341,17 @@ class Config {
   }
 
   /**
-   * @param {!Object<{audits: !Array<{id: string}>}>} categories
+   * Filter out any unrequested categories from the categories object.
+   * @param {!Object<string, {audits: !Array<{id: string}>}>} categories
    * @param {Array<string>=} categoryIds
-   * @param {Array<string>=} auditIds
-   * @return {!Object<{audits: !Array<{id: string}>}>}
+   * @return {!Object<string, {audits: !Array<{id: string}>}>}
    */
-  static filterCategoriesAndAudits(categories, categoryIds = [], auditIds = []) {
-    categories = Object.assign({}, categories);
+  static filterCategories(oldCategories, categoryIds = []) {
+    const categories = {};
 
-    Object.keys(categories).forEach(categoryId => {
+    Object.keys(oldCategories).forEach(categoryId => {
       if (categoryIds.includes(categoryId)) {
-        return;
-      }
-
-      const category = Object.assign({}, categories[categoryId]);
-      category.audits = category.audits.filter(item => auditIds.includes(item.id));
-      if (category.audits.length) {
-        categories[categoryId] = category;
-      } else {
-        delete categories[categoryId];
+        categories[categoryId] = oldCategories[categoryId];
       }
     });
 
@@ -366,7 +359,8 @@ class Config {
   }
 
   /**
-   * @param {!Object<{audits: !Array<{id: string}>}>} categories
+   * Finds the unique set of audit IDs used by the categories object.
+   * @param {!Object<string, {audits: !Array<{id: string}>}>} categories
    * @return {!Set<string>}
    */
   static getAuditIdsInCategories(categories) {
@@ -375,7 +369,7 @@ class Config {
   }
 
  /**
-  * @param {{categories: !Object<{name: string}>}} config
+  * @param {{categories: !Object<string, {name: string}>}} config
   * @return {!Array<{id: string, name: string}>}
   */
   static getCategories(config) {
