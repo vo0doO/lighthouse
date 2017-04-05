@@ -23,6 +23,7 @@ const REPORT_TEMPLATE = fs.readFileSync(path.join(__dirname, './report-template.
 // TODO: Setup a gulp pipeline to concat and minify the renderer files?
 const REPORT_JAVASCRIPT = fs.readFileSync(path.join(__dirname, './report-renderer.js'), 'utf8');
 const REPORT_CSS = fs.readFileSync(path.join(__dirname, './report-styles.css'), 'utf8');
+const REPORT_TEMPLATES = fs.readFileSync(path.join(__dirname, './templates.html'), 'utf8');
 
 class ReportGeneratorV2 {
   /**
@@ -97,11 +98,14 @@ class ReportGeneratorV2 {
   generateReportHtml(reportAsJson) {
     const sanitizedJson = JSON.stringify(reportAsJson).replace(/</g, '\\u003c');
     const sanitizedJavascript = REPORT_JAVASCRIPT.replace(/<\//g, '\\u003c/');
+    // Remove script in templates files just to be safe.
+    const sanitizedTemplates = REPORT_TEMPLATES.replace(/<script>([\s\S]*?)<\/script>/g, '');
 
     return ReportGeneratorV2.replaceStrings(REPORT_TEMPLATE, [
       {search: '%%LIGHTHOUSE_JSON%%', replacement: sanitizedJson},
       {search: '%%LIGHTHOUSE_JAVASCRIPT%%', replacement: sanitizedJavascript},
       {search: '/*%%LIGHTHOUSE_CSS%%*/', replacement: REPORT_CSS},
+      {search: '%%LIGHTHOUSE_TEMPLATES%%', replacement: sanitizedTemplates},
     ]);
   }
 }
