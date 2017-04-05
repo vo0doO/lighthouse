@@ -90,16 +90,11 @@ describe('Optimized responses', () => {
   });
 
   it('computes sizes', () => {
-    const checkSizes = (stat, original, gzip) => {
-      assert.equal(stat.resourceSize, original);
-      assert.equal(stat.gzipSize, gzip);
-    };
-
     return optimizedResponses.afterPass(options, createNetworkRequests(traceData))
       .then(artifact => {
         assert.equal(artifact.length, 2);
-        checkSizes(artifact[0], 6, 26);
-        checkSizes(artifact[1], 7, 27);
+        assert.equal(artifact[0].resourceSize, 6);
+        assert.equal(artifact[0].gzipSize, 26);
       });
   });
 

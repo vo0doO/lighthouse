@@ -24,8 +24,8 @@ const Audit = require('./byte-efficiency-audit');
 const URL = require('../../lib/url-shim');
 
 const IGNORE_THRESHOLD_IN_BYTES = 1400;
-const IGNORE_THRESHOLD_IN_PERCENT = 0.9;
-const TOTAL_WASTED_BYTES_THRESHOLD = 10 * 1024; // 5KB
+const IGNORE_THRESHOLD_IN_PERCENT = 0.1;
+const TOTAL_WASTED_BYTES_THRESHOLD = 10 * 1024; // 10KB
 
 class ResponsesAreCompressed extends Audit {
   /**
@@ -52,17 +52,19 @@ class ResponsesAreCompressed extends Audit {
     const uncompressedResponses = artifacts.ResponseCompression;
 
     let totalWastedBytes = 0;
-    const results = uncompressedResponses.reduce((results, record) => {
+    const results = [];
+    uncompressedResponses.forEach(record => {
       const originalSize = record.resourceSize;
       const gzipSize = record.gzipSize;
       const gzipSavings = originalSize - gzipSize;
 
-      // allow a pass if we don't get 10% savings or less than 1400 bytes
+      // we require at least 10% savings off the original size AND at least 1400 bytes
+      // if the savings is smaller than either, we don't care
       if (
-          gzipSize / originalSize > IGNORE_THRESHOLD_IN_PERCENT ||
+          1 - gzipSize / originalSize < IGNORE_THRESHOLD_IN_PERCENT ||
           gzipSavings < IGNORE_THRESHOLD_IN_BYTES
       ) {
-        return results;
+        return;
       }
 
       // remove duplicates
@@ -70,7 +72,7 @@ class ResponsesAreCompressed extends Audit {
       const isDuplicate = results.find(res => res.url === url &&
         res.totalBytes === record.resourceSize);
       if (isDuplicate) {
-        return results;
+        return;
       }
 
       totalWastedBytes += gzipSavings;
@@ -84,9 +86,7 @@ class ResponsesAreCompressed extends Audit {
         wastedPercent: gzipSavingsPercent,
         potentialSavings: this.toSavingsString(gzipSavingsBytes, gzipSavingsPercent),
       });
-
-      return results;
-    }, []);
+    });
 
     let debugString;
     return {

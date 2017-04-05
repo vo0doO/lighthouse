@@ -32,10 +32,12 @@ class ResponseCompression extends Gatherer {
    * @return {!Array<{url: string, isBase64DataUri: boolean, mimeType: string, resourceSize: number}>}
    */
   static filterUnoptimizedResponses(networkRecords) {
-    return networkRecords.reduce((prev, record) => {
+    const unoptimizedResponses = [];
+
+    networkRecords.forEach(record => {
       const isTextBasedResource = record.resourceType() && record.resourceType().isTextType();
       if (!isTextBasedResource || !record.resourceSize) {
-        return prev;
+        return;
       }
 
       const isContentEncoded = record.responseHeaders.find(header =>
@@ -44,16 +46,16 @@ class ResponseCompression extends Gatherer {
       );
 
       if (!isContentEncoded) {
-        prev.push({
+        unoptimizedResponses.push({
           record: record,
           url: record.url,
           mimeType: record.mimeType,
           resourceSize: record.resourceSize,
         });
       }
+    });
 
-      return prev;
-    }, []);
+    return unoptimizedResponses;
   }
 
   afterPass(options, traceData) {
