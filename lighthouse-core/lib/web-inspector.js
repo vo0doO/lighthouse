@@ -246,9 +246,9 @@ module.exports = (function() {
       getResponseBody(requestId, onComplete) {
         driver.sendCommand('Network.getResponseBody', {
           requestId,
-        }).then(response => {
-          onComplete(null, response.body, response.base64Encoded);
-        }).catch(err => onComplete(err));
+        })
+        .then(response => onComplete(null, response.body, response.base64Encoded))
+        .catch(err => onComplete(err));
       }
     };
     const fakeConsoleModel = {
