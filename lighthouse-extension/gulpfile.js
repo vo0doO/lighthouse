@@ -106,7 +106,7 @@ gulp.task('browserify-lighthouse', () => {
     'app/src/lighthouse-background.js'
   ], {read: false})
     .pipe(tap(file => {
-      let bundle = browserify(file.path); // , {debug: true})
+      let bundle = browserify(file.path, {debug: true});
       bundle = applyBrowserifyTransforms(bundle);
 
       // lighthouse-background will need some additional transforms, ignores and requires…
@@ -118,7 +118,8 @@ gulp.task('browserify-lighthouse', () => {
       .ignore('source-map')
       .ignore('whatwg-url')
       .ignore('url')
-      .ignore('debug/node');
+      .ignore('debug/node')
+      .ignore('pako/lib/zlib/inflate.js');
 
       // Expose the audits, gatherers, and computed artifacts so they can be dynamically loaded.
       const corePath = '../lighthouse-core/';

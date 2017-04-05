@@ -22,7 +22,7 @@
 'use strict';
 
 const Gatherer = require('../gatherer');
-const zlib = require('zlib');
+const gzip = require('zlib').gzip;
 
 const compressionTypes = ['gzip', 'br', 'deflate'];
 
@@ -72,7 +72,7 @@ class ResponseCompression extends Gatherer {
         }
 
         return new Promise((resolve, reject) => {
-          return zlib.gzip(content, (err, res) => {
+          return gzip(content, (err, res) => {
             if (err) {
               return reject(err);
             }
