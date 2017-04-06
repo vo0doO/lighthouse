@@ -17,13 +17,12 @@
 'use strict';
 
 const fs = require('fs');
-const path = require('path');
 
-const REPORT_TEMPLATE = fs.readFileSync(path.join(__dirname, './report-template.html'), 'utf8');
+const REPORT_TEMPLATE = fs.readFileSync(__dirname + '/report-template.html', 'utf8');
 // TODO: Setup a gulp pipeline to concat and minify the renderer files?
-const REPORT_JAVASCRIPT = fs.readFileSync(path.join(__dirname, './report-renderer.js'), 'utf8');
-const REPORT_CSS = fs.readFileSync(path.join(__dirname, './report-styles.css'), 'utf8');
-const REPORT_TEMPLATES = fs.readFileSync(path.join(__dirname, './templates.html'), 'utf8');
+const REPORT_JAVASCRIPT = fs.readFileSync(__dirname + '/report-renderer.js', 'utf8');
+const REPORT_CSS = fs.readFileSync(__dirname + '/report-styles.css', 'utf8');
+const REPORT_TEMPLATES = fs.readFileSync(__dirname + '/templates.html', 'utf8');
 
 class ReportGeneratorV2 {
   /**

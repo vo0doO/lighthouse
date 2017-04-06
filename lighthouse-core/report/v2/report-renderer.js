@@ -34,29 +34,23 @@ const RATINGS = {
 
 /**
  * Convert a score to a rating label.
- * @param {!number} score
- * @param {!string} scoringMode One of Audit.SCORING_MODES.
- * @return {!string}
+ * @param {number} score
+ * @return {string}
  */
-function calculateRating(score, scoringMode) {
-  if (scoringMode === 'numeric') {
-    let rating = RATINGS.FAIL.label;
-    if (score >= RATINGS.PASS.minScore) {
-      rating = RATINGS.PASS.label;
-    } else if (score >= RATINGS.AVERAGE.minScore) {
-      rating = RATINGS.AVERAGE.label;
-    }
-    return rating;
+function calculateRating(score) {
+  let rating = RATINGS.FAIL.label;
+  if (score >= RATINGS.PASS.minScore) {
+    rating = RATINGS.PASS.label;
+  } else if (score >= RATINGS.AVERAGE.minScore) {
+    rating = RATINGS.AVERAGE.label;
   }
-
-  // Treat as binary by default.
-  return score === 100 ? RATINGS.PASS.label : RATINGS.FAIL.label;
+  return rating;
 }
 
 /**
  * Format number.
- * @param {!number} number
- * @return {!string}
+ * @param {number} number
+ * @return {string}
  */
 function formatNumber(number) {
   return number.toLocaleString(undefined, {maximumFractionDigits: 1});
@@ -71,10 +65,10 @@ class DOM {
   }
 
   /**
-   * Sets the text content of an element, safely. If the element does not exist,
+   * Sets the text content of an element. If the element does not exist,
    * results in a noop.
    * @param {Element} element
-   * @param {!string} text
+   * @param {string} text
    * @return {Element}
    */
   static setText(element, text) {
@@ -85,15 +79,15 @@ class DOM {
   }
 
   /**
-   * Adds a class to an element, safely. If the element does not exist, results
+   * Adds a class to an element. If the element does not exist, results
    * in a noop.
    * @param {Element} element
-   * @param {...!string} classes
+   * @param {...string} classNames
    * @return {Element}
    */
-  static addClass(element, ...classes) {
+  static addClass(element, ...classNames) {
     if (element) {
-      element.classList.add(...classes);
+      element.classList.add(...classNames);
     }
     return element;
   }
@@ -116,7 +110,7 @@ class DOM {
   }
 
   /**
-   * @param {!string} selector
+   * @param {string} selector
    * @return {!DocumentFragment} A clone of the template content.
    * @throws {Error}
    */
@@ -150,47 +144,55 @@ class ReportRenderer {
   }
 
   /**
-   * @param {!Element} tmpl Parent node to populate with values.
-   * @param {!{value: string, scoringMode: string}} score
-   * @param {!string} title
-   * @param {!string} description
+   * @param {!Element} element DOM node to populate with values.
+   * @param {number} score
+   * @param {string} scoringMode
+   * @param {string} title
+   * @param {string} description
    * @return {!Element}
    */
-  _populateScore(tmpl, score, title, description) {
-    const rating = calculateRating(score.value, score.scoringMode);
-
+  _populateResult(element, score, scoringMode, title, description) {
     // Fill in the blanks.
-    const valueEl = tmpl.querySelector('.lighthouse-score__value');
-    DOM.setText(valueEl, formatNumber(score.value));
-    DOM.addClass(valueEl, `lighthouse-score__value--${rating}`,
-                          `lighthouse-score__value--${score.scoringMode}`);
+    const valueEl = element.querySelector('.lighthouse-score__value');
+    DOM.setText(valueEl, formatNumber(score));
+    DOM.addClass(valueEl, `lighthouse-score__value--${calculateRating(score)}`,
+        `lighthouse-score__value--${scoringMode}`);
 
-    DOM.setText(tmpl.querySelector('.lighthouse-score__title'), title);
-    DOM.setText(tmpl.querySelector('.lighthouse-score__description'), description);
+    DOM.setText(element.querySelector('.lighthouse-score__title'), title);
+    DOM.setText(element.querySelector('.lighthouse-score__description'), description);
 
-    return tmpl;
+    return element;
   }
 
   /**
-   * @param {!{value: string, scoringMode: string}} score
-   * @param {!string} title
-   * @param {!string} description
+   * @param {!AuditJSON} audit
    * @return {!Element}
    */
-  _renderAuditScore(score, title, description) {
+  _renderAuditScore(audit) {
     const tmpl = this._dom.cloneTemplate('#tmpl-lighthouse-audit-score');
-    return this._populateScore(tmpl, score, title, description);
+
+    const scoringMode = audit.result.scoringMode;
+    const description = audit.result.helpText;
+    let title = audit.result.description;
+
+    if (audit.result.displayValue) {
+      title += `:  ${audit.result.displayValue}`;
+    }
+    if (audit.result.optimalValue) {
+      title += ` (target: ${audit.result.optimalValue})`;
+    }
+
+    return this._populateResult(tmpl, audit.score, scoringMode, title, description);
   }
 
   /**
-   * @param {!{value: string, scoringMode: string}} score
-   * @param {!string} title
-   * @param {!string} description
+   * @param {!CategoryJSON} category
    * @return {!Element}
    */
-  _renderCategoryScore(score, title, description) {
+  _renderCategoryScore(category) {
     const tmpl = this._dom.cloneTemplate('#tmpl-lighthouse-category-score');
-    return this._populateScore(tmpl, score, title, description);
+    const score = Math.round(category.score);
+    return this._populateResult(tmpl, score, 'numeric', category.name, category.description);
   }
 
   /**
@@ -280,9 +282,7 @@ class ReportRenderer {
    */
   _renderCategory(category) {
     const element = this._dom.createElement('div', 'lighthouse-category');
-    const score = {value: Math.round(category.score), scoringMode: 'numeric'};
-    element.appendChild(
-        this._renderCategoryScore(score, category.name, category.description, category));
+    element.appendChild(this._renderCategoryScore(category));
     for (const audit of category.audits) {
       element.appendChild(this._renderAudit(audit));
     }
@@ -295,16 +295,7 @@ class ReportRenderer {
    */
   _renderAudit(audit) {
     const element = this._dom.createElement('div', 'lighthouse-audit');
-    let title = audit.result.description;
-    if (audit.result.displayValue) {
-      title += `:  ${audit.result.displayValue}`;
-    }
-    if (audit.result.optimalValue) {
-      title += ` (target: ${audit.result.optimalValue})`;
-    }
-
-    const score = {value: audit.score, scoringMode: audit.result.scoringMode};
-    element.appendChild(this._renderAuditScore(score, title, audit.result.helpText, audit));
+    element.appendChild(this._renderAuditScore(audit));
 
     // Append audit details to to header section so the entire audit is within one <details>.
     const header = element.querySelector('.lighthouse-score__header');

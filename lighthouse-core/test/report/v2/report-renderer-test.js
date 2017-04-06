@@ -15,17 +15,13 @@
  */
 'use strict';
 
-/* eslint-env mocha */
-/* global document self */
+/* eslint-env mocha, browser */
 
 const assert = require('assert');
 const fs = require('fs');
-const path = require('path');
 const jsdom = require('jsdom');
 const sampleResults = require('../../results/sample_v2.json');
-
-const TEMPLATES_FILE = fs.readFileSync(
-    path.join(__dirname, '../../../report/v2/templates.html'), 'utf8');
+const TEMPLATES_FILE = fs.readFileSync(__dirname + '/../../../report/v2/templates.html', 'utf8');
 
 function setupJsDomGlobals() {
   global.document = jsdom.jsdom(TEMPLATES_FILE);
@@ -110,7 +106,7 @@ describe('DOM', () => {
     it('fails when template cannot be found', () => {
       const dom = new DOM(document);
       assert.throws(() => {
-        const clone = dom.cloneTemplate('#unknown-selector'); // eslint-disable-line no-unused-vars
+        dom.cloneTemplate('#unknown-selector');
       });
     });
   });
@@ -133,7 +129,11 @@ describe('ReportRenderer V2', () => {
 
     it('should render an exception for invalid input', () => {
       const renderer = new ReportRenderer(document);
-      const output = renderer.renderReport({});
+      const output = renderer.renderReport({
+        get reportCategories() {
+          throw new Error();
+        }
+      });
       assert.ok(output.classList.contains('lighthouse-exception'));
     });
 
