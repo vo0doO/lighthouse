@@ -25,7 +25,7 @@
 /* eslint-env browser */
 /* eslint indent: [2, 2, { "SwitchCase": 1, "outerIIFEBody": 0 }] */
 
-(function() {
+(function(self) {
 const RATINGS = {
   PASS: {label: 'pass', minScore: 75},
   AVERAGE: {label: 'average', minScore: 45},

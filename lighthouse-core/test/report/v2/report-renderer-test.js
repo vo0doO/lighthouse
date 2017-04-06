@@ -24,20 +24,23 @@ const path = require('path');
 const jsdom = require('jsdom');
 const sampleResults = require('../../results/sample_v2.json');
 
-require('../../../report/v2/report-renderer.js');
-
 const TEMPLATES_FILE = fs.readFileSync(
     path.join(__dirname, '../../../report/v2/templates.html'), 'utf8');
 
 function setupJsDomGlobals() {
   global.document = jsdom.jsdom(TEMPLATES_FILE);
   global.window = global.document.defaultView;
+  global.self = global.window;
 }
 
 function cleanupJsDomGlobals() {
   global.document = undefined;
   global.window = undefined;
+  global.self = undefined;
 }
+
+setupJsDomGlobals(); // Run jsdom setup code before report renderer is executed.
+require('../../../report/v2/report-renderer.js');
 
 describe('DOM', () => {
   const window = self;
