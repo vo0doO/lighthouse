@@ -236,10 +236,7 @@ body {
   width: var(--lh-category-score-width);
 }
 
-/* hide drop down arrow for categories and use correct pointer */
-.lighthouse-category > .lighthouse-score .lighthouse-score__arrow {
-  display: none;
-}
+/* Category snippet shouldnt have pointer cursor. */
 .lighthouse-category > .lighthouse-score .lighthouse-score__snippet {
   cursor: initial;
 }

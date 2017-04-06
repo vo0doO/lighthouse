@@ -109,9 +109,9 @@ class DOM {
     if (className) {
       element.className = className;
     }
-    for (const [key, val] of Object.entries(attrs)) {
-      element.setAttribute(key, val);
-    }
+    Object.keys(attrs).forEach(key => {
+      element.setAttribute(key, attrs[key]);
+    });
     return element;
   }
 
@@ -160,10 +160,10 @@ class ReportRenderer {
     const rating = calculateRating(score.value, score.scoringMode);
 
     // Fill in the blanks.
-    const value = tmpl.querySelector('.lighthouse-score__value');
-    DOM.setText(value, formatNumber(score.value));
-    DOM.addClass(value, `lighthouse-score__value--${rating}`,
-                        `lighthouse-score__value--${score.scoringMode}`);
+    const valueEl = tmpl.querySelector('.lighthouse-score__value');
+    DOM.setText(valueEl, formatNumber(score.value));
+    DOM.addClass(valueEl, `lighthouse-score__value--${rating}`,
+                          `lighthouse-score__value--${score.scoringMode}`);
 
     DOM.setText(tmpl.querySelector('.lighthouse-score__title'), title);
     DOM.setText(tmpl.querySelector('.lighthouse-score__description'), description);
@@ -282,7 +282,7 @@ class ReportRenderer {
     const element = this._dom.createElement('div', 'lighthouse-category');
     const score = {value: Math.round(category.score), scoringMode: 'numeric'};
     element.appendChild(
-        this._renderAuditScore(score, category.name, category.description, category));
+        this._renderCategoryScore(score, category.name, category.description, category));
     for (const audit of category.audits) {
       element.appendChild(this._renderAudit(audit));
     }
