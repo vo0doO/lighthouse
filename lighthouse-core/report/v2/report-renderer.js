@@ -23,9 +23,7 @@
  */
 
 /* eslint-env browser */
-/* eslint indent: [2, 2, { "SwitchCase": 1, "outerIIFEBody": 0 }] */
 
-(function(self) {
 const RATINGS = {
   PASS: {label: 'pass', minScore: 75},
   AVERAGE: {label: 'average', minScore: 45},
@@ -144,7 +142,7 @@ class ReportRenderer {
   }
 
   /**
-   * @param {!Element} element DOM node to populate with values.
+   * @param {!DocumentFragment|Element} element DOM node to populate with values.
    * @param {number} score
    * @param {string} scoringMode
    * @param {string} title
@@ -311,9 +309,8 @@ class ReportRenderer {
 }
 
 // Exports
-self.ReportRenderer = ReportRenderer;
-self.DOM = DOM;
-})(self);
+window.ReportRenderer = ReportRenderer;
+window.DOM = DOM;
 
 /** @typedef {{type: string, text: string|undefined, header: DetailsJSON|undefined, items: Array<DetailsJSON>|undefined}} */
 let DetailsJSON; // eslint-disable-line no-unused-vars
