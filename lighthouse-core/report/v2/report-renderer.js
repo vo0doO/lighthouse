@@ -54,7 +54,7 @@ function formatNumber(number) {
   return number.toLocaleString(undefined, {maximumFractionDigits: 1});
 }
 
-class DOM {
+class ReportRenderer {
   /**
    * @param {!Document} document
    */
@@ -63,40 +63,24 @@ class DOM {
   }
 
   /**
-   * Sets the text content of an element. If the element does not exist,
-   * results in a noop.
-   * @param {Element} element
-   * @param {string} text
-   * @return {Element}
+   * @param {!ReportJSON} report
+   * @return {!Element}
    */
-  static setText(element, text) {
-    if (element) {
-      element.textContent = text;
+  renderReport(report) {
+    try {
+      return this._renderReport(report);
+    } catch (e) {
+      return this._renderException(e);
     }
-    return element;
   }
 
-  /**
-   * Adds a class to an element. If the element does not exist, results
-   * in a noop.
-   * @param {Element} element
-   * @param {...string} classNames
-   * @return {Element}
-   */
-  static addClass(element, ...classNames) {
-    if (element) {
-      element.classList.add(...classNames);
-    }
-    return element;
-  }
-
-  /**
+ /**
    * @param {string} name
    * @param {string=} className
    * @param {!Object<string, string>=} attrs Attribute key/val pairs.
    * @return {!Element}
    */
-  createElement(name, className, attrs = {}) {
+  _createElement(name, className, attrs = {}) {
     const element = this._document.createElement(name);
     if (className) {
       element.className = className;
@@ -112,33 +96,12 @@ class DOM {
    * @return {!DocumentFragment} A clone of the template content.
    * @throws {Error}
    */
-  cloneTemplate(selector) {
+  _cloneTemplate(selector) {
     const template = this._document.querySelector(selector);
     if (!template) {
       throw new Error(`Template not found: template${selector}`);
     }
     return this._document.importNode(template.content, true);
-  }
-}
-
-class ReportRenderer {
-  /**
-   * @param {!Document} document
-   */
-  constructor(document) {
-    this._dom = new DOM(document);
-  }
-
-  /**
-   * @param {!ReportJSON} report
-   * @return {!Element}
-   */
-  renderReport(report) {
-    try {
-      return this._renderReport(report);
-    } catch (e) {
-      return this._renderException(e);
-    }
   }
 
   /**
@@ -149,15 +112,15 @@ class ReportRenderer {
    * @param {string} description
    * @return {!Element}
    */
-  _populateResult(element, score, scoringMode, title, description) {
+  _populateScore(element, score, scoringMode, title, description) {
     // Fill in the blanks.
     const valueEl = element.querySelector('.lighthouse-score__value');
-    DOM.setText(valueEl, formatNumber(score));
-    DOM.addClass(valueEl, `lighthouse-score__value--${calculateRating(score)}`,
-        `lighthouse-score__value--${scoringMode}`);
+    valueEl.textContent = formatNumber(score);
+    valueEl.classList.add(`lighthouse-score__value--${calculateRating(score)}`,
+                          `lighthouse-score__value--${scoringMode}`);
 
-    DOM.setText(element.querySelector('.lighthouse-score__title'), title);
-    DOM.setText(element.querySelector('.lighthouse-score__description'), description);
+    element.querySelector('.lighthouse-score__title').textContent = title;
+    element.querySelector('.lighthouse-score__description').textContent = description;
 
     return element;
   }
@@ -167,7 +130,7 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderAuditScore(audit) {
-    const tmpl = this._dom.cloneTemplate('#tmpl-lighthouse-audit-score');
+    const tmpl = this._cloneTemplate('#tmpl-lighthouse-audit-score');
 
     const scoringMode = audit.result.scoringMode;
     const description = audit.result.helpText;
@@ -180,7 +143,7 @@ class ReportRenderer {
       title += ` (target: ${audit.result.optimalValue})`;
     }
 
-    return this._populateResult(tmpl, audit.score, scoringMode, title, description);
+    return this._populateScore(tmpl, audit.score, scoringMode, title, description);
   }
 
   /**
@@ -188,9 +151,9 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderCategoryScore(category) {
-    const tmpl = this._dom.cloneTemplate('#tmpl-lighthouse-category-score');
+    const tmpl = this._cloneTemplate('#tmpl-lighthouse-category-score');
     const score = Math.round(category.score);
-    return this._populateResult(tmpl, score, 'numeric', category.name, category.description);
+    return this._populateScore(tmpl, score, 'numeric', category.name, category.description);
   }
 
   /**
@@ -215,7 +178,7 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderText(text) {
-    const element = this._dom.createElement('div', 'lighthouse-text');
+    const element = this._createElement('div', 'lighthouse-text');
     element.textContent = text.text;
     return element;
   }
@@ -225,7 +188,7 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderBlock(block) {
-    const element = this._dom.createElement('div', 'lighthouse-block');
+    const element = this._createElement('div', 'lighthouse-block');
     for (const item of block.items) {
       element.appendChild(this._renderDetails(item));
     }
@@ -237,14 +200,14 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderList(list) {
-    const element = this._dom.createElement('details', 'lighthouse-list');
+    const element = this._createElement('details', 'lighthouse-list');
     if (list.header) {
-      const summary = this._dom.createElement('summary', 'lighthouse-list__header');
+      const summary = this._createElement('summary', 'lighthouse-list__header');
       summary.textContent = list.header.text;
       element.appendChild(summary);
     }
 
-    const items = this._dom.createElement('div', 'lighthouse-list__items');
+    const items = this._createElement('div', 'lighthouse-list__items');
     for (const item of list.items) {
       items.appendChild(this._renderDetails(item));
     }
@@ -257,7 +220,7 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderException(e) {
-    const element = this._dom.createElement('div', 'lighthouse-exception');
+    const element = this._createElement('div', 'lighthouse-exception');
     element.textContent = String(e.stack);
     return element;
   }
@@ -267,7 +230,7 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderReport(report) {
-    const element = this._dom.createElement('div', 'lighthouse-report');
+    const element = this._createElement('div', 'lighthouse-report');
     for (const category of report.reportCategories) {
       element.appendChild(this._renderCategory(category));
     }
@@ -279,7 +242,7 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderCategory(category) {
-    const element = this._dom.createElement('div', 'lighthouse-category');
+    const element = this._createElement('div', 'lighthouse-category');
     element.appendChild(this._renderCategoryScore(category));
     for (const audit of category.audits) {
       element.appendChild(this._renderAudit(audit));
@@ -292,25 +255,23 @@ class ReportRenderer {
    * @return {!Element}
    */
   _renderAudit(audit) {
-    const element = this._dom.createElement('div', 'lighthouse-audit');
+    const element = this._createElement('div', 'lighthouse-audit');
     element.appendChild(this._renderAuditScore(audit));
 
     // Append audit details to to header section so the entire audit is within one <details>.
     const header = element.querySelector('.lighthouse-score__header');
-    if (header) {
-      header.open = audit.score < 100; // expand failed audits
-      if (audit.result.details) {
-        header.appendChild(this._renderDetails(audit.result.details));
-      }
+    header.open = audit.score < 100; // expand failed audits
+    if (audit.result.details) {
+      header.appendChild(this._renderDetails(audit.result.details));
     }
 
     return element;
   }
 }
 
-// Exports
-window.ReportRenderer = ReportRenderer;
-window.DOM = DOM;
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = ReportRenderer;
+}
 
 /** @typedef {{type: string, text: string|undefined, header: DetailsJSON|undefined, items: Array<DetailsJSON>|undefined}} */
 let DetailsJSON; // eslint-disable-line no-unused-vars

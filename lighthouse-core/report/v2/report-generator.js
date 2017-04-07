@@ -97,14 +97,12 @@ class ReportGeneratorV2 {
   generateReportHtml(reportAsJson) {
     const sanitizedJson = JSON.stringify(reportAsJson).replace(/</g, '\\u003c');
     const sanitizedJavascript = REPORT_JAVASCRIPT.replace(/<\//g, '\\u003c/');
-    // Remove script in templates files just to be safe.
-    const sanitizedTemplates = REPORT_TEMPLATES.replace(/<script>([\s\S]*?)<\/script>/g, '');
 
     return ReportGeneratorV2.replaceStrings(REPORT_TEMPLATE, [
       {search: '%%LIGHTHOUSE_JSON%%', replacement: sanitizedJson},
       {search: '%%LIGHTHOUSE_JAVASCRIPT%%', replacement: sanitizedJavascript},
       {search: '/*%%LIGHTHOUSE_CSS%%*/', replacement: REPORT_CSS},
-      {search: '%%LIGHTHOUSE_TEMPLATES%%', replacement: sanitizedTemplates},
+      {search: '%%LIGHTHOUSE_TEMPLATES%%', replacement: REPORT_TEMPLATES},
     ]);
   }
 }

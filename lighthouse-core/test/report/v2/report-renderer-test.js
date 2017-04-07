@@ -20,110 +20,22 @@
 const assert = require('assert');
 const fs = require('fs');
 const jsdom = require('jsdom');
+const ReportRenderer = require('../../../report/v2/report-renderer.js');
 const sampleResults = require('../../results/sample_v2.json');
+
 const TEMPLATE_FILE = fs.readFileSync(__dirname + '/../../../report/v2/templates.html', 'utf8');
 
-function setupJsDomGlobals() {
-  global.document = jsdom.jsdom(TEMPLATE_FILE);
-  global.window = global.document.defaultView;
-}
-
-function cleanupJsDomGlobals() {
-  global.document = undefined;
-  global.window = undefined;
-}
-
-setupJsDomGlobals(); // Run jsdom setup code before report renderer is executed.
-require('../../../report/v2/report-renderer.js');
-
-describe('DOM', () => {
-  const DOM = window.DOM;
-
-  before(setupJsDomGlobals);
-  after(cleanupJsDomGlobals);
-
-  describe('setText', () => {
-    it('sets text of element', () => {
-      const el = document.createElement('div');
-      const result = DOM.setText(el, 'hello world');
-      assert.deepStrictEqual(result, el);
-      assert.equal(result.textContent, 'hello world');
-    });
-
-    it('does not fail when given null element argument', () => {
-      assert.doesNotThrow(() => {
-        const result = DOM.setText(null, 'hello world');
-        assert.strictEqual(result, null);
-      });
-    });
-  });
-
-  describe('addClass', () => {
-    it('adds classes to element', () => {
-      const el = document.createElement('div');
-      const result = DOM.addClass(el, 'class1', 'class2');
-      assert.ok(result.classList.contains, 'class1');
-      assert.ok(result.classList.contains, 'class2');
-    });
-
-    it('does not fail when given null element argument', () => {
-      assert.doesNotThrow(() => {
-        const result = DOM.addClass(null, 'class1');
-        assert.strictEqual(result, null);
-      });
-    });
-  });
-
-  describe('createElement', () => {
-    it('creates a simple element using default values', () => {
-      const dom = new DOM(document);
-      const el = dom.createElement('div');
-      assert.equal(el.localName, 'div');
-      assert.equal(el.className, '');
-      assert.equal(el.className, el.attributes.length);
-    });
-
-    it('creates an element from parameters', () => {
-      const dom = new DOM(document);
-      const el = dom.createElement('div', 'class1 class2', {title: 'title attr', tabindex: 0});
-      assert.equal(el.localName, 'div');
-      assert.equal(el.className, 'class1 class2');
-      assert.equal(el.getAttribute('title'), 'title attr');
-      assert.equal(el.getAttribute('tabindex'), '0');
-    });
-  });
-
-  describe('cloneTemplate', () => {
-    it('should clone a template', () => {
-      const dom = new DOM(document);
-      const clone = dom.cloneTemplate('#tmpl-lighthouse-audit-score');
-      assert.ok(clone.querySelector('.lighthouse-score'));
-    });
-
-    it('fails when template cannot be found', () => {
-      const dom = new DOM(document);
-      assert.throws(() => {
-        dom.cloneTemplate('#unknown-selector');
-      });
-    });
-  });
-});
-
 describe('ReportRenderer V2', () => {
-  before(setupJsDomGlobals);
-  after(cleanupJsDomGlobals);
-
   describe('renderReport', () => {
-    const ReportRenderer = window.ReportRenderer;
+    const document = jsdom.jsdom(TEMPLATE_FILE);
+    const renderer = new ReportRenderer(document);
 
     it('should render a report', () => {
-      const renderer = new ReportRenderer(document);
       const output = renderer.renderReport(sampleResults);
       assert.ok(output.classList.contains('lighthouse-report'));
     });
 
     it('should render an exception for invalid input', () => {
-      const renderer = new ReportRenderer(document);
       const output = renderer.renderReport({
         get reportCategories() {
           throw new Error();
@@ -132,8 +44,36 @@ describe('ReportRenderer V2', () => {
       assert.ok(output.classList.contains('lighthouse-exception'));
     });
 
+    describe('createElement', () => {
+      it('creates a simple element using default values', () => {
+        const el = renderer._createElement('div');
+        assert.equal(el.localName, 'div');
+        assert.equal(el.className, '');
+        assert.equal(el.className, el.attributes.length);
+      });
+
+      it('creates an element from parameters', () => {
+        const el = renderer._createElement(
+            'div', 'class1 class2', {title: 'title attr', tabindex: 0});
+        assert.equal(el.localName, 'div');
+        assert.equal(el.className, 'class1 class2');
+        assert.equal(el.getAttribute('title'), 'title attr');
+        assert.equal(el.getAttribute('tabindex'), '0');
+      });
+    });
+
+    describe('cloneTemplate', () => {
+      it('should clone a template', () => {
+        const clone = renderer._cloneTemplate('#tmpl-lighthouse-audit-score');
+        assert.ok(clone.querySelector('.lighthouse-score'));
+      });
+
+      it('fails when template cannot be found', () => {
+        assert.throws(() => renderer._cloneTemplate('#unknown-selector'));
+      });
+    });
+
     it('renders an audit', () => {
-      const renderer = new ReportRenderer(document);
       const audit = sampleResults.reportCategories[0].audits[0];
       const auditDOM = renderer._renderAudit(audit);
 
@@ -149,7 +89,6 @@ describe('ReportRenderer V2', () => {
     });
 
     it('renders a category', () => {
-      const renderer = new ReportRenderer(document);
       const category = sampleResults.reportCategories[0];
       const categoryDOM = renderer._renderCategory(category);
 
